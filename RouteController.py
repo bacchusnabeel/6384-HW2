@@ -3,6 +3,7 @@ import random
 import os
 import sys
 from core.Util import *
+import copy
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
@@ -98,12 +99,15 @@ class ShampooPolicy(RouteController):
             visited = {}  # map of visited edges
             current_edge = vehicle.current_edge
 
-            for i in range(2):
+            for i in range(3):
                 if len(self.connection_info.outgoing_edges_dict[current_edge].keys()) == 0:
                     break
 
-                options = [self.connection_info.outgoing_edges_dict[current_edge].keys()]
-                choice = options[random.randint(0, len(options))]
+                options = []
+                for key in self.connection_info.outgoing_edges_dict[current_edge].keys():
+                    options.append(key)
+                # print(options)
+                choice = options[random.randint(0, len(options)-1)]
 
                 decision_list.append(choice)
                 current_edge = self.connection_info.outgoing_edges_dict[current_edge][choice]
@@ -121,8 +125,6 @@ class ShampooPolicy(RouteController):
                     edge_length = self.connection_info.edge_length_dict[outgoing_edge]
                     new_distance = current_distance + edge_length   #Adding new edge length to the current distance traveled
                     if new_distance < unvisited[outgoing_edge]:     #Picking the shortest edge from all available edges
-
-                        #Add weighted randomization in this spot. 
                         unvisited[outgoing_edge] = new_distance
                         current_path = copy.deepcopy(path_lists[current_edge])
                         current_path.append(direction)
@@ -146,66 +148,3 @@ class ShampooPolicy(RouteController):
             local_targets[vehicle.vehicle_id] = self.compute_local_target(decision_list, vehicle)
         return local_targets
 
-class RandomPolicy(RouteController):
-    """
-    Example class for a custom scheduling algorithm.
-    Utilizes a random decision policy until vehicle destination is within reach,
-    then targets the vehicle destination.
-    """
-    def __init__(self, connection_info):
-        super().__init__(connection_info)
-
-    def make_decisions(self, vehicles, connection_info):
-        """
-        A custom scheduling algorithm can be written in between the 'Your algo...' comments.
-        -For each car in the vehicle batch, your algorithm should provide a list of future decisions.
-        -Sometimes short paths result in the vehicle reaching its local TRACI destination before reaching its
-         true global destination. In order to counteract this, ask for a list of decisions rather than just one.
-        -This list of decisions is sent to a function that returns the 'closest viable target' edge
-          reachable by the decisions - it is not the case that all decisions will always be consumed.
-          As soon as there is enough distance between the current edge and the target edge, the compute_target_edge
-          function will return.
-        -The 'closest viable edge' is a local target that is used by TRACI to control vehicles
-        -The closest viable edge should always be far enough away to ensure that the vehicle is not removed
-          from the simulation by TRACI before the vehicle reaches its true destination
-
-        :param vehicles: list of vehicles to make routing decisions for
-        :param connection_info: object containing network information
-        :return: local_targets: {vehicle_id, target_edge}, where target_edge is a local target to send to TRACI
-        """
-
-        local_targets = {}
-        for vehicle in vehicles:
-            start_edge = vehicle.current_edge
-
-            '''
-            Your algo starts here
-            '''
-            decision_list = []
-
-            i = 0
-            while i < 10:  # choose the number of decisions to make in advanced; depends on the algorithm and network
-                choice = self.direction_choices[random.randint(0, 5)]  # 6 choices available in total
-
-                # dead end
-                if len(self.connection_info.outgoing_edges_dict[start_edge].keys()) == 0:
-                    break
-
-                # make sure to check if it's a valid edge and move to next edge based on choice.
-                if choice in self.connection_info.outgoing_edges_dict[start_edge].keys():
-                    decision_list.append(choice)
-                    start_edge = self.connection_info.outgoing_edges_dict[start_edge][choice]
-
-                    if i > 0:
-                        if decision_list[i-1] == decision_list[i] and decision_list[i] == 't':
-                            # stuck in a turnaround loop, let TRACI remove vehicle
-                            break
-
-                    i += 1
-
-            '''
-            Your algo ends here
-            '''
-            local_targets[vehicle.vehicle_id] = self.compute_local_target(decision_list, vehicle)
-
-        return local_targets
