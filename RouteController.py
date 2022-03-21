@@ -98,6 +98,7 @@ class ShampooPolicy(RouteController):
             unvisited = {edge: 1000000000 for edge in self.connection_info.edge_list}  # map of unvisited edges
             visited = {}  # map of visited edges
             current_edge = vehicle.current_edge
+            current_distance = self.connection_info.edge_length_dict[current_edge]
 
             for i in range(3):
                 if len(self.connection_info.outgoing_edges_dict[current_edge].keys()) == 0:
@@ -111,11 +112,15 @@ class ShampooPolicy(RouteController):
 
                 decision_list.append(choice)
                 current_edge = self.connection_info.outgoing_edges_dict[current_edge][choice]
+                current_distance = self.connection_info.edge_length_dict[current_edge]
+                unvisited[current_edge] = current_distance
+                del unvisited[current_edge]
 
-            current_distance = self.connection_info.edge_length_dict[current_edge]
+
             unvisited[current_edge] = current_distance
             path_lists = {edge: [] for edge in
                           self.connection_info.edge_list}  # stores shortest path to each edge using directions
+
             while True:
                 if current_edge not in self.connection_info.outgoing_edges_dict.keys(): #Prevents going on the same edge
                     continue
@@ -139,8 +144,6 @@ class ShampooPolicy(RouteController):
                     break
                 possible_edges = [edge for edge in unvisited.items() if edge[1]]
                 current_edge, current_distance = sorted(possible_edges, key=lambda x: x[1])[0]
-                # print('{}:{}------------'.format(current_edge, current_distance))
-            # current_edge = vehicle.current_edge
 
             for direction in path_lists[vehicle.destination]:
                 decision_list.append(direction)

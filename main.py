@@ -72,6 +72,7 @@ def run_simulation(scheduler, vehicles):
     print("Average timespan: {}, total vehicle number: {}".format(str(total_time/end_number),\
         str(end_number)))
     print(str(deadlines_missed) + ' deadlines missed.')
+    traci.close()
 
 if __name__ == "__main__":
     sumo_binary = checkBinary('sumo-gui')
