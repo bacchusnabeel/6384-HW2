@@ -91,10 +91,11 @@ if __name__ == "__main__":
     route_file_attr = route_file_node[0].attributes
     route_file = "./configurations/"+route_file_attr['value'].nodeValue
     vehicles = get_controlled_vehicles(route_file, init_connection_info, 10, 50)
-    # vehicles_2 = vehicles
+    # vehicles = get_controlled_vehicles(route_file, init_connection_info, 50, 10)
+    # vehicles = get_controlled_vehicles(route_file, init_connection_info, 30, 30)
     #print the controlled vehicles generated
     for vid, v in vehicles.items():
         print("id: {}, destination: {}, start time:{}, deadline: {};".format(vid, \
             v.destination, v.start_time, v.deadline))
-    # test_dijkstra_policy(vehicles)
+    test_dijkstra_policy(vehicles)
     test_shampoo_policy(vehicles)
